@@ -37,6 +37,17 @@ const LOGIN_USER_OPTIONS = {
 	id: 'number',
 };
 
+const REGISTER_USER_OPTIONS = {
+	username: {
+		type: 'string',
+		required: true,
+	},
+	password: {
+		type: 'string',
+		required: true,
+	},
+};
+
 class Database {
 	WEB_APP;
 	USERS;
@@ -82,10 +93,6 @@ class JsonDatabase extends Database {
 		this.DB.defaults(options.defaultContent).write();
 	}
 
-	CreateUser() {
-		// this.DB.get('users');
-	}
-
 	LoginUser(options) {
 		new OptionsValidator(LOGIN_USER_OPTIONS, options);
 
@@ -118,7 +125,31 @@ class JsonDatabase extends Database {
 		return null;
 	}
 
+	RegisterUser(options) {
+		new OptionsValidator(REGISTER_USER_OPTIONS, options);
+
+		this.ValidateUsername(options.username);
+		this.ValidatePassword(options.password);
+
+		this.DB.get('users').push(new User(username, password).ToObject()).write();
+
+		this.LoginUser({
+			username: options.username,
+			password: options.password,
+		});
+	}
+
 	LogoutUser() {}
+
+	ValidateUsername(username) {
+		const usernames = this.DB.get('users').map('username').value();
+		if (usernames.includes(username)) {
+			throw new JsonDatabaseException(`Username taken.`);
+		}
+	}
+	ValidatePassword(password) {
+		//TODO
+	}
 }
 
 class MongoDatabase extends Database {

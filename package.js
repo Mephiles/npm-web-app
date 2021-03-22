@@ -125,6 +125,10 @@ export default class WebApp extends App {
 		return this.DATABASE.LoginUser(userModel);
 	}
 
+	RegisterUser(userModel) {
+		return this.DATABASE.RegisterUser(userModel);
+	}
+
 	// Response
 
 	JsonResponse(object) {
