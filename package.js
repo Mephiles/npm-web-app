@@ -1,3 +1,6 @@
+// Local modules
+const { JsonDatabase, MongoDatabase } = require('Database');
+
 // GK packages
 const Utilities = require('gk-utilities');
 const OptionsValidator = require('gk-options-validator');
@@ -15,6 +18,7 @@ const WEB_APP_OPTIONS_TEMPLATE = {
 		favicon: 'file-path',
 	},
 	routes: {
+		folder: 'folder-path',
 		files: {
 			type: 'list',
 			listContents: 'file-path',
@@ -36,14 +40,13 @@ const WEB_APP_OPTIONS_TEMPLATE = {
 export default class WebApp extends App {
 	ROUTER;
 	OPTIONS = {};
+	DATABASE;
 
 	constructor(options) {
 		super(options);
 		const appOptions = new OptionsValidator(WEB_APP_OPTIONS_TEMPLATE, options).ToObject();
 		this.SetupOptons(appOptions);
-
 		this.SetupRouter();
-		this.SetupRoutes(options);
 		this.SetupDatabase();
 
 		// Listen
@@ -80,6 +83,8 @@ export default class WebApp extends App {
 		this.ROUTER.set('view engine', 'ejs');
 		this.ROUTER.use(this.OPTIONS.PATH.public, express.static('public'));
 		this.ROUTER.use(favicon(__dirname + this.OPTIONS.PATH.favicon));
+
+		this.SetupRoutes();
 	}
 
 	SetupRoutes() {
@@ -104,14 +109,62 @@ export default class WebApp extends App {
 	SetupDatabase() {
 		switch (this.OPTIONS.DATABASE.system) {
 			case 'json':
-				this.SetupJsonDatabase();
+				this.DATABASE = new JsonDatabase(this);
 				break;
 			case 'mongodb':
-				this.SetupMongoDatabase();
+				this.DATABASE = new MongoDatabase(this);
 				break;
 			default:
 				break;
 		}
+	}
+
+	// User
+
+	LoginUser(userModel) {
+		return this.DATABASE.LoginUser(userModel);
+	}
+
+	// Response
+
+	JsonResponse(object) {
+		if (object instanceof Error) {
+			return {
+				success: false,
+				data: object,
+			};
+		} else {
+			return {
+				success: true,
+				data: object,
+			};
+		}
+	}
+
+	// Redirect methods
+
+	render(...args) {
+		return this.ROUTER.render(...args);
+	}
+
+	redirect(...args) {
+		return this.ROUTER.redirect(...args);
+	}
+
+	get(...args) {
+		return this.ROUTER.get(...args);
+	}
+
+	post(...args) {
+		return this.ROUTER.post(...args);
+	}
+
+	GET(...args) {
+		this.get(...args);
+	}
+
+	POST(...args) {
+		this.port(...args);
 	}
 }
 
